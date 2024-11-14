@@ -7,6 +7,8 @@ import "../styles/Analysis.css";
 import Savings from "../components/Savings";
 import Dropdown from "../components/Dropdown";
 import { formatAmount } from "../utils/helpers";
+import MonthlyExpensesBarChart from "./MonthlyExpensesBarChart";  // Import the new Bar Chart component
+
 
 // import { getHighLevel, getEssentialTransactions, getUser } from "../utils/api";
 
@@ -145,7 +147,7 @@ export default function Analysis({ transactions, setTransactions }) {
     sumAll += transactions[i].amount;
   }
   console.log("TOTAL SUM!! ", sumAll);
-
+ 
   const categoryData = {
     labels: [
       "Housing",
@@ -168,11 +170,8 @@ export default function Analysis({ transactions, setTransactions }) {
           sumCategory.find((x) => x.category === "Food-Groceries")?.amount || 0,
           sumCategory.find((x) => x.category === "Restaurant/Fast-Food")?.amount || 0,
           sumCategory.find((x) => x.category === "Transportation")?.amount || 0,
-          sumCategory.find(
-            (x) => x.category === "Utilities - Gas, Electric, Water"
-          )?.amount || 0,
-          sumCategory.find((x) => x.category === "Cable/Streaming Services")
-            ?.amount || 0,
+          sumCategory.find((x) => x.category === "Utilities - Gas, Electric, Water")?.amount || 0,
+          sumCategory.find((x) => x.category === "Cable/Streaming Services")?.amount || 0,
           sumCategory.find((x) => x.category === "Insurance")?.amount || 0,
           sumCategory.find((x) => x.category === "Medical/Health")?.amount || 0,
           sumCategory.find((x) => x.category === "Entertainment")?.amount || 0,
@@ -197,19 +196,34 @@ export default function Analysis({ transactions, setTransactions }) {
     ],
     options: {
       responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (tooltipItem) {
+              const dataset = tooltipItem.chart.data.datasets[tooltipItem.datasetIndex];
+              const total = dataset.data.reduce((sum, value) => sum + value, 0);
+              const percentage = ((tooltipItem.raw / total) * 100).toFixed(2); // Calculate percentage
+              return `${tooltipItem.label}: ₹${tooltipItem.raw} (${percentage}%)`; // Show the value and percentage
+            },
+          },
+        },
+        legend: {
+          position: "bottom",
+          labels: { color: "black", wordWrap: true, maxWidth: 150, fontSize: 10 },
+        },
+      },
     },
   };
 
-  const highLevelCategoryData = {
+
+   const highLevelCategoryData = {
     labels: ["Essential", "Non-Essential"],
     datasets: [
       {
         label: "Spending by Essential/Non-Essential",
         data: [
-          sumHighLevel.find((x) => x.highLevelCategory === "Essential")
-            ?.amount || 0,
-          sumHighLevel.find((x) => x.highLevelCategory === "Non-Essential")
-            ?.amount || 0,
+          sumHighLevel.find((x) => x.highLevelCategory === "Essential")?.amount || 0,
+          sumHighLevel.find((x) => x.highLevelCategory === "Non-Essential")?.amount || 0,
         ],
         backgroundColor: ["#7583a7", "#FF4D4D"],
         hoverOffset: 4,
@@ -217,73 +231,101 @@ export default function Analysis({ transactions, setTransactions }) {
     ],
     options: {
       responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (tooltipItem) {
+              const dataset = tooltipItem.chart.data.datasets[tooltipItem.datasetIndex];
+              const total = dataset.data.reduce((sum, value) => sum + value, 0);
+              const percentage = ((tooltipItem.raw / total) * 100).toFixed(2); // Calculate percentage
+              return `${tooltipItem.label}: ₹${tooltipItem.raw} (${percentage}%)`; // Show the value and percentage
+            },
+          },
+        },
+        legend: {
+          position: "bottom",
+          labels: { color: "black", wordWrap: true, maxWidth: 150 },
+        },
+      },
     },
   };
-
+  
+  
   return (
-    <div>
-      <h1 id="charts-title">Your Spending Charts</h1>
+    <div className="container-fluid">
+      <h1 id="charts-title" className="text-center mb-4">Your Spending Charts</h1>
       <Dropdown onOptionChange={handleOptionChange} />
-      <div className="row d-flex justify-content-around">
-        <div className="col col-sm-12 col-lg-6" id="pie-chart-1">
-        <div className="row">
-            <div className="card card-chart ml-5">
-              <div className="card-header card-chart-header">
-                <h3 className="chart-title text-center text-light">{selectedTimePeriod}</h3>
-                <h4>Total: Rs. {formatAmount(selectedTotal)}</h4>
-                <h3 className="chart-title text-center text-light">
-                  <span className="blue-text">Essential</span> vs <span className="red-text">Non-Essential</span>
-                </h3>
-              </div>
-              <div className="card-body card-chart-body m-5">
-                
-                <Pie
-                  className="chart chartjs-render-monitor chart-legend"
-                  data={highLevelCategoryData}
-                  options={{
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                        labels: { color: "black", wordWrap: true, maxWidth: 150 },
+  
+      <div className="row justify-content-center">
+        {/* Using CSS Grid for Advanced Layout */}
+        <div className="col-12 col-md-10 col-lg-10">
+          <div className="chart-grid">
+            {/* First Column with Pie Charts */}
+            <div className="chart-item d-flex justify-content-center">
+              <div className="card card-chart">
+                <div className="card-header text-center card-chart-header">
+                  <h3 className="chart-title text-light">{selectedTimePeriod}</h3>
+                  <h4>Total: Rs. {formatAmount(selectedTotal)}</h4>
+                  <h3 className="chart-title text-light">
+                    <span className="blue-text">Essential</span> vs <span className="red-text">Non-Essential</span>
+                  </h3>
+                </div>
+                <div className="card-body card-chart-body">
+                  <Pie
+                    className="chart chartjs-render-monitor"
+                    data={highLevelCategoryData}
+                    options={{
+                      plugins: {
+                        legend: {
+                          position: "bottom",
+                          labels: { color: "black", wordWrap: true, maxWidth: 150 },
+                        },
                       },
-                    },
-                  }}
-                ></Pie>
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="row">
-            <div className="card card-chart ml-5">
-              <div className="card-header card-chart-header">
-                <h3 className="chart-title text-center text-light">{selectedTimePeriod}</h3>
-                <h4>Total: Rs. {formatAmount(selectedTotal)}</h4>
-                <h4 className="chart-title text-centermb-2 text-light">
-                  by Category
-                </h4>
-              </div>
-              <div className="card-body card-chart-body m-5">
-                <Pie
-                  className="chart chartjs-render-monitor chart-legend"
-                  data={categoryData}
-                  options={{
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                        labels: { color: "black", wordWrap: true, maxWidth: 150, fontSize: 10 },
+  
+            {/* Second Column with Pie Chart for Spending by Category */}
+            <div className="chart-item d-flex justify-content-center">
+              <div className="card card-chart">
+                <div className="card-header text-center card-chart-header">
+                  <h3 className="chart-title text-light">{selectedTimePeriod}</h3>
+                  <h4>Total: Rs. {formatAmount(selectedTotal)}</h4>
+                  <h4 className="chart-title text-light mb-2">by Category</h4>
+                </div>
+                <div className="card-body card-chart-body">
+                  <Pie
+                    className="chart chartjs-render-monitor"
+                    data={categoryData}
+                    options={{
+                      plugins: {
+                        legend: {
+                          position: "bottom",
+                          labels: { color: "black", wordWrap: true, maxWidth: 150, fontSize: 10 },
+                        },
                       },
-                    },
-                  }}
-                ></Pie>
+                    }}
+                  />
+                </div>
               </div>
             </div>
+  
+            {/* Bar Chart Section */}
+            <div className="chart-item d-flex justify-content-center">
+              <div className="chart-container">
+                <MonthlyExpensesBarChart transactions={transactions} />
+              </div>
+            </div>
+  
+            {/* Savings Component */}
+            <div className="chart-item d-flex justify-content-center">
+              <Savings currentMonthHighLevel={currentMonthHighLevel} />
+            </div>
           </div>
-          
         </div>
-        <div className="col col-sm-12 col-lg-6 mt-5">
-          <Savings currentMonthHighLevel={currentMonthHighLevel} />
-        </div>
-        <div>{/* <TransactionTable/> */}</div>
       </div>
     </div>
   );
-}
+}  
